@@ -1,6 +1,6 @@
 {
   "name": "opencode-viking-skill-plugin",
-  "version": "0.1.3",
+  "version": "0.1.7",
   "description": "OpenCode plugin for loading Viking remote skills",
   "type": "module",
   "main": "dist/index.js",

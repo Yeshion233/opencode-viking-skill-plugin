@@ -5,31 +5,7 @@ import { homedir } from "node:os";
 import * as readline from "node:readline";
 
 const OPENCODE_CONFIG_DIR = join(homedir(), ".config", "opencode");
-const OPENCODE_COMMAND_DIR = join(OPENCODE_CONFIG_DIR, "command");
 const PLUGIN_NAME = "opencode-viking-skill-plugin@latest";
-
-const VIKING_SKILL_LIST_COMMAND = `---
-description: List available Viking skills
----
-
-# Viking Skills List
-
-Use the viking_skill tool to list, load, search, or reload Viking skills.
-
-Available modes:
-- list: List all available skills
-- load: Load a specific skill by name
-- search: Search skills by query
-- reload: Reload skills from the server
-
-Example usage:
-\`\`\`
-viking_skill(mode: "list")
-viking_skill(mode: "load", name: "infographic-creator")
-viking_skill(mode: "search", query: "pdf")
-viking_skill(mode: "reload")
-\`\`\`
-`;
 
 function createReadline(): readline.Interface {
   return readline.createInterface({
@@ -65,35 +41,62 @@ function addPluginToConfig(configPath: string): boolean {
   try {
     const content = readFileSync(configPath, "utf-8");
     
-    if (content.includes("opencode-viking-skill-plugin")) {
+    const config = JSON.parse(content);
+    
+    if (!config.plugin) {
+      config.plugin = [];
+    }
+    
+    if (config.plugin.includes(PLUGIN_NAME)) {
       console.log("✓ Plugin already registered in config");
       return true;
     }
-
-    if (content.includes('"plugin"')) {
-      const newContent = content.replace(
-        /("plugin"\s*:\s*\[)([^\]]*?)(\])/,
-        (_match, start, middle, end) => {
-          const trimmed = middle.trim();
-          if (trimmed === "") {
-            return `${start}\n    "${PLUGIN_NAME}"\n  ${end}`;
-          }
-          return `${start}${middle.trimEnd()},\n    "${PLUGIN_NAME}"\n  ${end}`;
-        }
-      );
-      writeFileSync(configPath, newContent);
-    } else {
-      const newContent = content.replace(
-        /^(\s*\{)/,
-        `$1\n  "plugin": ["${PLUGIN_NAME}"],`
-      );
-      writeFileSync(configPath, newContent);
-    }
+    
+    config.plugin.push(PLUGIN_NAME);
+    
+    const newContent = JSON.stringify(config, null, 2);
+    writeFileSync(configPath, newContent);
 
     console.log(`✓ Added plugin to ${configPath}`);
     return true;
   } catch (err) {
     console.error("✗ Failed to update config:", err);
+    return false;
+  }
+}
+
+function addCommandToConfig(configPath: string): boolean {
+  try {
+    const content = readFileSync(configPath, "utf-8");
+    
+    const config = JSON.parse(content);
+    
+    if (!config.command) {
+      config.command = {};
+    }
+    
+    if (config.command.viking_skill_list) {
+      console.log("✓ Command already registered in config");
+      return true;
+    }
+    
+    config.command.viking_skill_list = {
+      template: "/viking_skill mode=list",
+      description: "List available Viking skills"
+    };
+    
+    config.command.viking_skill_load = {
+      template: "/viking_skill mode=load name={skill-id}",
+      description: "Load the latest version of a Viking skill"
+    };
+    
+    const newContent = JSON.stringify(config, null, 2);
+    writeFileSync(configPath, newContent);
+
+    console.log(`✓ Added command to ${configPath}`);
+    return true;
+  } catch (err) {
+    console.error("✗ Failed to add command to config:", err);
     return false;
   }
 }
@@ -112,13 +115,13 @@ function createNewConfig(): boolean {
   return true;
 }
 
-function createCommand(): boolean {
-  mkdirSync(OPENCODE_COMMAND_DIR, { recursive: true });
-  const commandPath = join(OPENCODE_COMMAND_DIR, "viking_skill_list.md");
-
-  writeFileSync(commandPath, VIKING_SKILL_LIST_COMMAND);
-  console.log(`✓ Created /viking_skill_list command`);
-  return true;
+function addCommand(): boolean {
+  const configPath = findOpencodeConfig();
+  if (!configPath) {
+    console.error("✗ No OpenCode config found");
+    return false;
+  }
+  return addCommandToConfig(configPath);
 }
 
 interface InstallOptions {
@@ -157,16 +160,16 @@ async function install(options: InstallOptions): Promise<number> {
     }
   }
 
-  console.log("\nStep 2: Create /viking_skill_list command");
+  console.log("\nStep 2: Add /viking_skill_list command to config");
   if (options.tui) {
-    const shouldCreate = await confirm(rl!, "Add /viking_skill_list command?");
+    const shouldCreate = await confirm(rl!, "Add /viking_skill_list command to config?");
     if (!shouldCreate) {
       console.log("Skipped.");
     } else {
-      createCommand();
+      addCommand();
     }
   } else {
-    createCommand();
+    addCommand();
   }
 
   console.log("\n" + "─".repeat(50));
