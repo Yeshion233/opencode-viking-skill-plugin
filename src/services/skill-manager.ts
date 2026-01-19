@@ -212,33 +212,46 @@ export class SkillManager {
   }
 
   async loadSkillContent(skillId: string): Promise<string | null> {
-    const cacheKey = `content:${skillId}`
-    if (this.skillContentCache.has(cacheKey)) {
-      return this.skillContentCache.get(cacheKey)!
-    }
-
     try {
       this.log.info("Loading skill content", { skillId })
       
-      const skill = this.skills.get(skillId)
-      if (!skill) {
-        this.log.warn("Skill not found", { skillId })
+      const detail = await VikingApiClient.getSkillDetail(
+        this.config.apiUrl,
+        this.config.ak,
+        this.config.sk,
+        skillId,
+        3
+      )
+
+      if (!detail) {
+        this.log.warn("Failed to get skill detail", { skillId })
         return null
       }
 
-      const cachedSkill = this.cachedSkills.get(`${skillId}:${skill.latestVersion}`)
+      const latestVersion = detail.skill_basic.version
+      const cacheKey = `${skillId}:${latestVersion}`
+      const cachedSkill = this.cachedSkills.get(cacheKey)
+
       if (!cachedSkill) {
-        this.log.warn("Skill not cached", { skillId, version: skill.latestVersion })
+        this.log.info("Skill not cached, downloading", { skillId, version: latestVersion })
+        await this.downloadAndCacheSkill(skillId, latestVersion)
+        await this.cleanupOldVersions(skillId, latestVersion)
+      } else {
+        this.log.debug("Skill already cached", { skillId, version: latestVersion })
+      }
+
+      const updatedCachedSkill = this.cachedSkills.get(cacheKey)
+      if (!updatedCachedSkill) {
+        this.log.warn("Failed to load cached skill after download", { skillId, version: latestVersion })
         return null
       }
 
-      const skillMdPath = path.join(cachedSkill.path, "SKILL.md")
+      const skillMdPath = path.join(updatedCachedSkill.path, "SKILL.md")
       const content = await fs.readFile(skillMdPath, "utf-8")
       
-      // Also copy skill to opencode expected directory structure
-      await this.copySkillToOpencodeDir(skillId, cachedSkill.path)
+      await this.copySkillToOpencodeDir(skillId, updatedCachedSkill.path)
       
-      this.skillContentCache.set(cacheKey, content)
+      this.skillContentCache.set(`content:${skillId}`, content)
       return content
     } catch (error) {
       this.log.error("Failed to load skill content", { skillId, error })
@@ -249,26 +262,13 @@ export class SkillManager {
   private async copySkillToOpencodeDir(skillId: string, sourceDir: string): Promise<void> {
     try {
       const opencodeSkillDir = path.join(this.config.cacheDir, skillId)
+      
+      await fs.rm(opencodeSkillDir, { recursive: true, force: true })
       await fs.mkdir(opencodeSkillDir, { recursive: true })
       
-      // Copy SKILL.md file
-      const sourceSkillMd = path.join(sourceDir, "SKILL.md")
-      const destSkillMd = path.join(opencodeSkillDir, "SKILL.md")
+      await fs.cp(sourceDir, opencodeSkillDir, { recursive: true })
       
-      if (await fs.stat(sourceSkillMd).then(() => true).catch(() => false)) {
-        await fs.copyFile(sourceSkillMd, destSkillMd)
-        this.log.debug("Copied skill to opencode directory", { skillId, dest: destSkillMd })
-      }
-      
-      // Copy reference directory if exists
-      const sourceRefDir = path.join(sourceDir, "reference")
-      const destRefDir = path.join(opencodeSkillDir, "reference")
-      
-      if (await fs.stat(sourceRefDir).then(() => true).catch(() => false)) {
-        await fs.cp(sourceRefDir, destRefDir, { recursive: true })
-        this.log.debug("Copied reference directory", { skillId, dest: destRefDir })
-      }
-      
+      this.log.debug("Copied skill to opencode directory", { skillId, dest: opencodeSkillDir })
     } catch (error) {
       this.log.warn("Failed to copy skill to opencode directory", { skillId, error })
     }
