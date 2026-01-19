@@ -24,7 +24,7 @@ Add to `~/.config/opencode/opencode.jsonc`:
 Or let your agent do it - paste this into OpenCode:
 
 ```text
-Install opencode-supermemory by following https://raw.githubusercontent.com/supermemoryai/opencode-supermemory/main/README.md
+Install opencode-viking-skill-plugin by following https://github.com/Yeshion233/opencode-viking-skill-plugin/blob/main/README.md
 ```
 
 ### Environment Variables
