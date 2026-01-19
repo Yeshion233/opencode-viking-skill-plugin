@@ -7,9 +7,7 @@ OpenCode plugin for loading and using Viking remote skills.
 ### Install the Package
 
 ```bash
-bun install opencode-viking-skill-plugin
-# or
-npm install opencode-viking-skill-plugin
+bunx opencode-viking-skill-plugin@latest install
 ```
 
 ### Configure OpenCode

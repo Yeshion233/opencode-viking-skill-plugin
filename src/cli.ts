@@ -70,42 +70,24 @@ function addPluginToConfig(configPath: string): boolean {
       return true;
     }
 
-    let config: Record<string, unknown>;
-    
-    try {
-      const jsonContent = content.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
-      config = JSON.parse(jsonContent);
-    } catch {
-      console.error("✗ Failed to parse config file");
-      return false;
-    }
-
-    const plugins = (config.plugin as string[]) || [];
-    plugins.push(PLUGIN_NAME);
-    config.plugin = plugins;
-
-    if (configPath.endsWith(".jsonc")) {
-      if (content.includes('"plugin"')) {
-        const newContent = content.replace(
-          /("plugin"\s*:\s*\[)([^\]]*?)(\])/,
-          (_match, start, middle, end) => {
-            const trimmed = middle.trim();
-            if (trimmed === "") {
-              return `${start}\n    "${PLUGIN_NAME}"\n  ${end}`;
-            }
-            return `${start}${middle.trimEnd()},\n    "${PLUGIN_NAME}"\n  ${end}`;
+    if (content.includes('"plugin"')) {
+      const newContent = content.replace(
+        /("plugin"\s*:\s*\[)([^\]]*?)(\])/,
+        (_match, start, middle, end) => {
+          const trimmed = middle.trim();
+          if (trimmed === "") {
+            return `${start}\n    "${PLUGIN_NAME}"\n  ${end}`;
           }
-        );
-        writeFileSync(configPath, newContent);
-      } else {
-        const newContent = content.replace(
-          /^(\s*\{)/,
-          `$1\n  "plugin": ["${PLUGIN_NAME}"],`
-        );
-        writeFileSync(configPath, newContent);
-      }
+          return `${start}${middle.trimEnd()},\n    "${PLUGIN_NAME}"\n  ${end}`;
+        }
+      );
+      writeFileSync(configPath, newContent);
     } else {
-      writeFileSync(configPath, JSON.stringify(config, null, 2));
+      const newContent = content.replace(
+        /^(\s*\{)/,
+        `$1\n  "plugin": ["${PLUGIN_NAME}"],`
+      );
+      writeFileSync(configPath, newContent);
     }
 
     console.log(`✓ Added plugin to ${configPath}`);
