@@ -4,13 +4,15 @@ OpenCode plugin for loading and using Viking remote skills.
 
 ## Installation
 
-### Automatic Installation
+### Install the Package
 
 ```bash
-bunx opencode-viking-skill-plugin@latest install
+bun install opencode-viking-skill-plugin
+# or
+npm install opencode-viking-skill-plugin
 ```
 
-### Manual Configuration
+### Configure OpenCode
 
 Add to `~/.config/opencode/opencode.jsonc`:
 
@@ -18,6 +20,11 @@ Add to `~/.config/opencode/opencode.jsonc`:
 {
   "plugin": ["opencode-viking-skill-plugin"]
 }
+```
+Or let your agent do it - paste this into OpenCode:
+
+```text
+Install opencode-supermemory by following https://raw.githubusercontent.com/supermemoryai/opencode-supermemory/main/README.md
 ```
 
 ### Environment Variables
