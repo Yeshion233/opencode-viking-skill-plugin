@@ -236,23 +236,29 @@ export class SkillManager {
         this.log.info("Skill not cached, downloading", { skillId, version: latestVersion })
         await this.downloadAndCacheSkill(skillId, latestVersion)
         await this.cleanupOldVersions(skillId, latestVersion)
+        
+        const updatedCachedSkill = this.cachedSkills.get(cacheKey)
+        if (!updatedCachedSkill) {
+          this.log.warn("Failed to load cached skill after download", { skillId, version: latestVersion })
+          return null
+        }
+
+        const skillMdPath = path.join(updatedCachedSkill.path, "SKILL.md")
+        const content = await fs.readFile(skillMdPath, "utf-8")
+        
+        await this.copySkillToOpencodeDir(skillId, updatedCachedSkill.path)
+        
+        this.skillContentCache.set(`content:${skillId}`, content)
+        return content
       } else {
-        this.log.debug("Skill already cached", { skillId, version: latestVersion })
+        this.log.debug("Skill already cached, using existing version", { skillId, version: latestVersion })
+        
+        const skillMdPath = path.join(cachedSkill.path, "SKILL.md")
+        const content = await fs.readFile(skillMdPath, "utf-8")
+        
+        this.skillContentCache.set(`content:${skillId}`, content)
+        return content
       }
-
-      const updatedCachedSkill = this.cachedSkills.get(cacheKey)
-      if (!updatedCachedSkill) {
-        this.log.warn("Failed to load cached skill after download", { skillId, version: latestVersion })
-        return null
-      }
-
-      const skillMdPath = path.join(updatedCachedSkill.path, "SKILL.md")
-      const content = await fs.readFile(skillMdPath, "utf-8")
-      
-      await this.copySkillToOpencodeDir(skillId, updatedCachedSkill.path)
-      
-      this.skillContentCache.set(`content:${skillId}`, content)
-      return content
     } catch (error) {
       this.log.error("Failed to load skill content", { skillId, error })
       return null
@@ -262,11 +268,13 @@ export class SkillManager {
   private async copySkillToOpencodeDir(skillId: string, sourceDir: string): Promise<void> {
     try {
       const opencodeSkillDir = path.join(this.config.cacheDir, skillId)
+      const tempDir = path.join(this.config.cacheDir, `${skillId}_temp_${Date.now()}`)
+      
+      await fs.mkdir(tempDir, { recursive: true })
+      await fs.cp(sourceDir, tempDir, { recursive: true })
       
       await fs.rm(opencodeSkillDir, { recursive: true, force: true })
-      await fs.mkdir(opencodeSkillDir, { recursive: true })
-      
-      await fs.cp(sourceDir, opencodeSkillDir, { recursive: true })
+      await fs.rename(tempDir, opencodeSkillDir)
       
       this.log.debug("Copied skill to opencode directory", { skillId, dest: opencodeSkillDir })
     } catch (error) {
