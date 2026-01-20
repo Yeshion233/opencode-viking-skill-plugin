@@ -114,12 +114,7 @@ function createNewConfig(): boolean {
   mkdirSync(OPENCODE_CONFIG_DIR, { recursive: true });
   
   const config = `{
-  "plugin": ["${PLUGIN_NAME}"],
-  "viking_skill": {
-    "apiUrl": "https://your-viking-api.com",
-    "ak": "your-access-key",
-    "sk": "your-secret-key"
-  }
+  "plugin": ["${PLUGIN_NAME}"]
 }
  `;
   
@@ -130,19 +125,17 @@ function createNewConfig(): boolean {
 
 function addVikingConfigToConfig(configPath: string, apiUrl: string, ak: string, sk: string): boolean {
   try {
-    const content = readFileSync(configPath, "utf-8");
-    const config = JSON.parse(content);
-    
-    config.viking_skill = {
-      apiUrl,
-      ak,
-      sk
+    const vikingConfigPath = join(OPENCODE_CONFIG_DIR, "viking.json");
+    const config = {
+      skill_api_url: apiUrl,
+      skill_ak: ak,
+      skill_sk: sk
     };
     
     const newContent = JSON.stringify(config, null, 2);
-    writeFileSync(configPath, newContent);
+    writeFileSync(vikingConfigPath, newContent);
 
-    console.log(`✓ Added Viking skill configuration to ${configPath}`);
+    console.log(`✓ Added Viking skill configuration to ${vikingConfigPath}`);
     return true;
   } catch (err) {
     console.error("✗ Failed to add Viking skill configuration:", err);
@@ -212,7 +205,7 @@ async function install(options: InstallOptions): Promise<number> {
   let credentialsConfigured = false;
   
   if (currentConfigPath && options.tui) {
-    const shouldAddConfig = await confirm(rl!, "Add Viking skill configuration to opencode.json?");
+    const shouldAddConfig = await confirm(rl!, "Create viking.json configuration file?");
     if (shouldAddConfig) {
       const apiUrl = await askInput(rl!, "Enter Viking API URL (e.g., https://your-viking-api.com):");
       const ak = await askInput(rl!, "Enter Access Key (AK):");
@@ -235,11 +228,11 @@ async function install(options: InstallOptions): Promise<number> {
     console.log("  export VIKING_SKILL_API_URL=\"https://your-viking-api.com\"");
     console.log("  export VIKING_SKILL_AK=\"your-access-key\"");
     console.log("  export VIKING_SKILL_SK=\"your-secret-key\"\n");
-    console.log("Option 2: Add to ~/.config/opencode/opencode.jsonc:");
-    console.log("  \"viking_skill\": {");
-    console.log("    \"apiUrl\": \"https://your-viking-api.com\",");
-    console.log("    \"ak\": \"your-access-key\",");
-    console.log("    \"sk\": \"your-secret-key\"");
+    console.log("Option 2: Create ~/.config/opencode/viking.json:");
+    console.log("  {");
+    console.log("    \"skill_api_url\": \"https://your-viking-api.com\",");
+    console.log("    \"skill_ak\": \"your-access-key\",");
+    console.log("    \"skill_sk\": \"your-secret-key\"");
     console.log("  }\n");
   }
 

@@ -10,30 +10,23 @@ export namespace Config {
     cacheDir: string
   }
 
-  export interface OpenCodeConfig {
-    viking_skill?: {
-      apiUrl?: string
-      ak?: string
-      sk?: string
-      cacheDir?: string
-    }
+  export interface VikingFileConfig {
+    skill_api_url?: string
+    skill_ak?: string
+    skill_sk?: string
+    skill_cache_dir?: string
   }
 
-  function getOpenCodeConfig(): OpenCodeConfig | null {
+  function getVikingConfig(): VikingFileConfig | null {
     const configDir = path.join(os.homedir(), ".config", "opencode")
-    const candidates = [
-      path.join(configDir, "opencode.jsonc"),
-      path.join(configDir, "opencode.json"),
-    ]
+    const configPath = path.join(configDir, "viking.json")
 
-    for (const configPath of candidates) {
-      if (existsSync(configPath)) {
-        try {
-          const content = readFileSync(configPath, "utf-8")
-          return JSON.parse(content) as OpenCodeConfig
-        } catch (err) {
-          console.warn(`[viking-skill-plugin] Failed to parse ${configPath}:`, err)
-        }
+    if (existsSync(configPath)) {
+      try {
+        const content = readFileSync(configPath, "utf-8")
+        return JSON.parse(content) as VikingFileConfig
+      } catch (err) {
+        console.warn(`[viking-skill-plugin] Failed to parse ${configPath}:`, err)
       }
     }
 
@@ -41,19 +34,18 @@ export namespace Config {
   }
 
   export function getConfig(): VikingConfig | null {
-    const openCodeConfig = getOpenCodeConfig()
-    const vikingConfig = openCodeConfig?.viking_skill || {}
+    const vikingConfig = getVikingConfig() || {}
 
-    const apiUrl = process.env.VIKING_SKILL_API_URL || vikingConfig.apiUrl
-    const ak = process.env.VIKING_SKILL_AK || vikingConfig.ak
-    const sk = process.env.VIKING_SKILL_SK || vikingConfig.sk
+    const apiUrl = process.env.VIKING_SKILL_API_URL || vikingConfig.skill_api_url
+    const ak = process.env.VIKING_SKILL_AK || vikingConfig.skill_ak
+    const sk = process.env.VIKING_SKILL_SK || vikingConfig.skill_sk
 
     if (!apiUrl || !ak || !sk) {
-      console.warn("[viking-skill-plugin] Viking API not configured. Set environment variables (VIKING_SKILL_API_URL, VIKING_SKILL_AK, VIKING_SKILL_SK) or add viking config to opencode.json")
+      console.warn("[viking-skill-plugin] Viking API not configured. Set environment variables (VIKING_SKILL_API_URL, VIKING_SKILL_AK, VIKING_SKILL_SK) or create viking.json config")
       return null
     }
 
-    const cacheDir = process.env.VIKING_SKILL_CACHE_DIR || vikingConfig.cacheDir || path.join(os.homedir(), ".opencode", "skill")
+    const cacheDir = process.env.VIKING_SKILL_CACHE_DIR || vikingConfig.skill_cache_dir || path.join(os.homedir(), ".opencode", "skill")
 
     return { apiUrl, ak, sk, cacheDir }
   }

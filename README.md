@@ -13,7 +13,7 @@ The install command will:
 2. Add `/viking_skill_list` command to list available Viking skills
 3. Add `/viking_skill_load` command to load a specific Viking skill
 4. Prompt you to configure Viking skill credentials (optional)
-   - If accepted: adds configuration to opencode.jsonc
+   - If accepted: creates `~/.config/opencode/viking.json` with credentials
    - If declined: displays instructions for environment variables or manual config
 
 Or let your agent do it - paste this into OpenCode:
@@ -40,19 +40,16 @@ Optional: Set custom cache directory (default: `~/.opencode/skill`)
 export VIKING_SKILL_CACHE_DIR="/path/to/cache"
 ```
 
-### Option 2: OpenCode Config File
+### Option 2: Viking Config File
 
-Add to `~/.config/opencode/opencode.jsonc`:
+Create `~/.config/opencode/viking.json`:
 
-```jsonc
+```json
 {
-  "plugin": [ "opencode-viking-skill-plugin" ],
-  "viking_skill": {
-    "apiUrl": "https://your-viking-api.com",
-    "ak": "your-access-key",
-    "sk": "your-secret-key",
-    "cacheDir": "/path/to/cache"  // Optional, default: ~/.opencode/skill
-  }
+  "skill_api_url": "https://your-viking-api.com",
+  "skill_ak": "your-access-key",
+  "skill_sk": "your-secret-key",
+  "skill_cache_dir": "/path/to/cache"
 }
 ```
 
@@ -69,27 +66,13 @@ Add to `~/.config/opencode/opencode.jsonc`:
 /viking_skill_list
 ```
 
-### Load a Viking Skill
+### Reload a Viking Skill
 
 ```
-/viking_skill_load name=skill-id
+/viking_skill_load
 ```
 
 ### Using Viking Skills in Context
-
-When skills are loaded, they become available in the conversation context:
-
-```
-[Viking Skills Available]
-The following Viking skills are available for use:
-  - infographic-: infographic-creator
-  - infographic-item-creator: infographic-item-creator
-  - infographic-structure-creator: infographic-structure-creator
-  - infographic-template-updater: infographic-template-updater
-  - pdf: pdf
-
-Use the skill tool with the skill name to load detailed instructions.
-```
 
 ## Development
 
