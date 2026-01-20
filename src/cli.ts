@@ -22,6 +22,14 @@ async function confirm(rl: readline.Interface, question: string): Promise<boolea
   });
 }
 
+async function askInput(rl: readline.Interface, question: string): Promise<string> {
+  return new Promise((resolve) => {
+    rl.question(`${question} `, (answer) => {
+      resolve(answer.trim());
+    });
+  });
+}
+
 function findOpencodeConfig(): string | null {
   const candidates = [
     join(OPENCODE_CONFIG_DIR, "opencode.jsonc"),
@@ -106,13 +114,40 @@ function createNewConfig(): boolean {
   mkdirSync(OPENCODE_CONFIG_DIR, { recursive: true });
   
   const config = `{
-  "plugin": ["${PLUGIN_NAME}"]
+  "plugin": ["${PLUGIN_NAME}"],
+  "viking_skill": {
+    "apiUrl": "https://your-viking-api.com",
+    "ak": "your-access-key",
+    "sk": "your-secret-key"
+  }
 }
-`;
+ `;
   
   writeFileSync(configPath, config);
   console.log(`✓ Created ${configPath}`);
   return true;
+}
+
+function addVikingConfigToConfig(configPath: string, apiUrl: string, ak: string, sk: string): boolean {
+  try {
+    const content = readFileSync(configPath, "utf-8");
+    const config = JSON.parse(content);
+    
+    config.viking_skill = {
+      apiUrl,
+      ak,
+      sk
+    };
+    
+    const newContent = JSON.stringify(config, null, 2);
+    writeFileSync(configPath, newContent);
+
+    console.log(`✓ Added Viking skill configuration to ${configPath}`);
+    return true;
+  } catch (err) {
+    console.error("✗ Failed to add Viking skill configuration:", err);
+    return false;
+  }
 }
 
 function addCommand(): boolean {
@@ -172,9 +207,41 @@ async function install(options: InstallOptions): Promise<number> {
     addCommand();
   }
 
+  console.log("\nStep 3: Configure Viking skill credentials");
+  const currentConfigPath = findOpencodeConfig();
+  let credentialsConfigured = false;
+  
+  if (currentConfigPath && options.tui) {
+    const shouldAddConfig = await confirm(rl!, "Add Viking skill configuration to opencode.json?");
+    if (shouldAddConfig) {
+      const apiUrl = await askInput(rl!, "Enter Viking API URL (e.g., https://your-viking-api.com):");
+      const ak = await askInput(rl!, "Enter Access Key (AK):");
+      const sk = await askInput(rl!, "Enter Secret Key (SK):");
+      
+      if (apiUrl && ak && sk) {
+        addVikingConfigToConfig(currentConfigPath, apiUrl, ak, sk);
+        credentialsConfigured = true;
+      }
+    }
+  }
+
   console.log("\n" + "─".repeat(50));
   console.log("\n✓ Setup complete! Restart OpenCode to activate.\n");
   console.log("Use /viking_skill_list to see available Viking skills.\n");
+  
+  if (!credentialsConfigured) {
+    console.log("Configure Viking skill credentials using one of these methods:\n");
+    console.log("Option 1: Set environment variables (priority):");
+    console.log("  export VIKING_SKILL_API_URL=\"https://your-viking-api.com\"");
+    console.log("  export VIKING_SKILL_AK=\"your-access-key\"");
+    console.log("  export VIKING_SKILL_SK=\"your-secret-key\"\n");
+    console.log("Option 2: Add to ~/.config/opencode/opencode.jsonc:");
+    console.log("  \"viking_skill\": {");
+    console.log("    \"apiUrl\": \"https://your-viking-api.com\",");
+    console.log("    \"ak\": \"your-access-key\",");
+    console.log("    \"sk\": \"your-secret-key\"");
+    console.log("  }\n");
+  }
 
   if (rl) rl.close();
   return 0;

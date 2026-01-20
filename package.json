@@ -1,6 +1,6 @@
 {
   "name": "opencode-viking-skill-plugin",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "description": "OpenCode plugin for loading Viking remote skills",
   "type": "module",
   "main": "dist/index.js",
@@ -25,7 +25,6 @@
   "dependencies": {
     "@opencode-ai/plugin": "^1.0.162",
     "@volcengine/openapi": "^1.35.0",
-    "opencode-viking-skill-plugin": "^0.1.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
