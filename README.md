@@ -30,8 +30,7 @@ Viking skill credentials can be configured in two ways (environment variables ta
 
 ```bash
 export VIKING_SKILL_API_URL="https://your-viking-api.com"
-export VIKING_SKILL_AK="your-access-key"
-export VIKING_SKILL_SK="your-secret-key"
+export VIKING_SKILL_API_KEY="your-api-key"
 ```
 
 Optional: Set custom cache directory (default: `~/.opencode/skill`)
@@ -47,11 +46,15 @@ Create `~/.config/opencode/viking.json`:
 ```json
 {
   "skill_api_url": "https://your-viking-api.com",
-  "skill_ak": "your-access-key",
-  "skill_sk": "your-secret-key",
-  "skill_cache_dir": "/path/to/cache"
+  "skill_api_key": "your-api-key"
 }
 ```
+
+### Authentication Priority
+
+The plugin supports two authentication methods:
+
+**API Key (Priority)**: Uses `Authorization: Bearer {api_key}` header
 
 ## Features
 

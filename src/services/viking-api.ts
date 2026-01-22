@@ -67,14 +67,24 @@ export namespace VikingApiClient {
     sk: string, 
     pathname: string, 
     method: 'GET' | 'POST',
-    body?: string
+    body?: string,
+    apiKey?: string
   ): Promise<Record<string, string>> {
+    const baseHeaders = {
+      Accept: 'application/json',
+      'Content-type': 'application/json'
+    }
+
+    if (apiKey) {
+      return {
+        ...baseHeaders,
+        'Authorization': `Bearer ${apiKey}`
+      }
+    }
+
     const requestObj: RequestObj = {
       region: 'cn-beijing',
-      headers: {
-        Accept: 'application/json',
-        'Content-type': 'application/json'
-      },
+      headers: baseHeaders,
       method,
       body,
       pathname,
@@ -89,7 +99,7 @@ export namespace VikingApiClient {
     return requestObj.headers
   }
 
-  export async function listSkills(apiUrl: string, ak: string, sk: string): Promise<RemoteSkillInfo[]> {
+  export async function listSkills(apiUrl: string, ak: string, sk: string, apiKey?: string): Promise<RemoteSkillInfo[]> {
     try {
       const requestBody = JSON.stringify({
         offset: 0,
@@ -104,7 +114,8 @@ export namespace VikingApiClient {
         sk,
         "/api/v1/skills/list",
         "POST",
-        requestBody
+        requestBody,
+        apiKey
       )
 
       const response = await fetch(`${apiUrl}/api/v1/skills/list`, {
@@ -135,7 +146,7 @@ export namespace VikingApiClient {
     }
   }
 
-  export async function getSkillDetail(apiUrl: string, ak: string, sk: string, skillId: string, retrieveLevel: number = 3): Promise<RemoteSkillDetail | null> {
+  export async function getSkillDetail(apiUrl: string, ak: string, sk: string, skillId: string, retrieveLevel: number = 3, apiKey?: string): Promise<RemoteSkillDetail | null> {
     try {
       const requestBody = JSON.stringify({
         skill_id: skillId,
@@ -150,7 +161,8 @@ export namespace VikingApiClient {
         sk,
         "/api/v1/skills/version/retrieve",
         "POST",
-        requestBody
+        requestBody,
+        apiKey
       )
 
       const response = await fetch(`${apiUrl}/api/v1/skills/version/retrieve`, {

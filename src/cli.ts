@@ -123,13 +123,12 @@ function createNewConfig(): boolean {
   return true;
 }
 
-function addVikingConfigToConfig(configPath: string, apiUrl: string, ak: string, sk: string): boolean {
+function addVikingConfigToConfig(configPath: string, apiUrl: string, apiKey: string): boolean {
   try {
     const vikingConfigPath = join(OPENCODE_CONFIG_DIR, "viking.json");
     const config = {
       skill_api_url: apiUrl,
-      skill_ak: ak,
-      skill_sk: sk
+      skill_api_key: apiKey
     };
     
     const newContent = JSON.stringify(config, null, 2);
@@ -208,11 +207,10 @@ async function install(options: InstallOptions): Promise<number> {
     const shouldAddConfig = await confirm(rl!, "Create viking.json configuration file?");
     if (shouldAddConfig) {
       const apiUrl = await askInput(rl!, "Enter Viking API URL (e.g., https://your-viking-api.com):");
-      const ak = await askInput(rl!, "Enter Access Key (AK):");
-      const sk = await askInput(rl!, "Enter Secret Key (SK):");
+      const apiKey = await askInput(rl!, "Enter API Key:");
       
-      if (apiUrl && ak && sk) {
-        addVikingConfigToConfig(currentConfigPath, apiUrl, ak, sk);
+      if (apiUrl && apiKey) {
+        addVikingConfigToConfig(currentConfigPath, apiUrl, apiKey);
         credentialsConfigured = true;
       }
     }
@@ -226,13 +224,11 @@ async function install(options: InstallOptions): Promise<number> {
     console.log("Configure Viking skill credentials using one of these methods:\n");
     console.log("Option 1: Set environment variables (priority):");
     console.log("  export VIKING_SKILL_API_URL=\"https://your-viking-api.com\"");
-    console.log("  export VIKING_SKILL_AK=\"your-access-key\"");
-    console.log("  export VIKING_SKILL_SK=\"your-secret-key\"\n");
+    console.log("  export VIKING_SKILL_API_KEY=\"your-api-key\"\n");
     console.log("Option 2: Create ~/.config/opencode/viking.json:");
     console.log("  {");
     console.log("    \"skill_api_url\": \"https://your-viking-api.com\",");
-    console.log("    \"skill_ak\": \"your-access-key\",");
-    console.log("    \"skill_sk\": \"your-secret-key\"");
+    console.log("    \"skill_api_key\": \"your-api-key\"");
     console.log("  }\n");
   }
 

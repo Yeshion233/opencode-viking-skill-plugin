@@ -100,7 +100,8 @@ export class SkillManager {
       const remoteSkills = await VikingApiClient.listSkills(
         this.config.apiUrl,
         this.config.ak,
-        this.config.sk
+        this.config.sk,
+        this.config.apiKey
       )
 
       this.skills.clear()
@@ -143,7 +144,8 @@ export class SkillManager {
         this.config.ak,
         this.config.sk,
         skillId,
-        3
+        3,
+        this.config.apiKey
       )
 
       if (!detail || !detail.file_info?.download_url) {
@@ -220,7 +222,8 @@ export class SkillManager {
         this.config.ak,
         this.config.sk,
         skillId,
-        3
+        3,
+        this.config.apiKey
       )
 
       if (!detail) {
